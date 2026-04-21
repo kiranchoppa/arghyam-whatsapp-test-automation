@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.whatsapp_edge_profile/
+.whatsapp_chrome_profile/
+.pytest_cache/
+

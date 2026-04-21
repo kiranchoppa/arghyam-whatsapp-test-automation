@@ -1,0 +1,2 @@
+"""Selenium WhatsApp automation package."""
+
