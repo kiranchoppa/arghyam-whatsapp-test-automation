@@ -1,5 +1,4 @@
 python-dotenv
+psycopg2-binary
 selenium
 webdriver-manager
-pytest
-psycopg2-binary

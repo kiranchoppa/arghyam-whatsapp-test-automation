@@ -1,1 +1,1 @@
-"""Business-logic service modules for WhatsApp automation."""
+"""Service-layer helpers."""

@@ -4,5 +4,6 @@
   "code-runner.runInTerminal": true,
   "code-runner.executorMap": {
     "python": "${workspaceFolder}/.venv/bin/python -u"
-  }
+  },
+  "python-envs.pythonProjects": []
 }

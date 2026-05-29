@@ -12,19 +12,14 @@ DEFAULT_RESPONSE_TIMEOUT = 60
 @dataclass(frozen=True)
 class WhatsAppConfig:
     recipient_number: str
-    message: str
+    user_number: str
+    start_message: str
     browser: str
     edge_profile_dir: str
     edge_profile_name: str
     keep_browser_open: bool
     send_timeout: int
     response_timeout: int
-    db_url: str
-    db_username: str
-    db_password: str
-    common_schema: str
-    tent_config: str
-    tent_id: int
 
 
 def validate_phone(number, variable_name):
@@ -38,7 +33,11 @@ def validate_phone(number, variable_name):
 def load_config():
     load_dotenv()
     recipient_number = os.getenv("JALSHOOCHAK_WHATSAPP_NUMBER", "").strip()
-    message = os.getenv("WHATSAPP_MESSAGE", "Pump reading test message.").strip()
+    user_number = os.getenv("USER_NUMBER", "").strip()
+    app_env = os.getenv("APP_ENV", "dev").strip().lower()
+    start_message = os.getenv("START_MESSAGE", "").strip()
+    if not start_message:
+        start_message = "startstaging" if app_env == "staging" else "start"
     browser = os.getenv("WHATSAPP_BROWSER", "edge").strip().lower()
     edge_profile_dir = os.path.expanduser(
         os.getenv("EDGE_PROFILE_DIR", "~/.config/microsoft-edge").strip()
@@ -54,45 +53,32 @@ def load_config():
         os.getenv("RESPONSE_TIMEOUT_SECONDS", str(DEFAULT_RESPONSE_TIMEOUT)).strip()
     )
 
-    db_url = os.getenv("DB_URL", "").strip()
-    db_username = os.getenv("DB_USERNAME", "").strip()
-    db_password = os.getenv("DB_PASSWORD", "").strip()
-    common_schema = os.getenv("COMMON_SCHEMA", "common_schema").strip()
-    tent_config = os.getenv("TENT_CONFIG", "tenant_config_master_table").strip()
-    tent_id = int(os.getenv("TENT_ID", "17").strip())
-
     if not recipient_number:
         raise ValueError("Missing JALSHOOCHAK_WHATSAPP_NUMBER in .env")
-    if not message:
-        raise ValueError("WHATSAPP_MESSAGE is empty in .env")
+    if not user_number:
+        raise ValueError("Missing USER_NUMBER in .env")
+    if app_env not in ("dev", "staging"):
+        raise ValueError("APP_ENV must be 'dev' or 'staging'")
+    if not start_message:
+        raise ValueError("START_MESSAGE must not be empty")
     if browser not in ("edge", "chromium"):
         raise ValueError("WHATSAPP_BROWSER must be 'edge' or 'chromium'")
     if send_timeout < 10:
         raise ValueError("SEND_TIMEOUT_SECONDS should be at least 10")
     if response_timeout < 5:
         raise ValueError("RESPONSE_TIMEOUT_SECONDS should be at least 5")
-    if not db_url:
-        raise ValueError("Missing DB_URL in .env")
-    if not db_username:
-        raise ValueError("Missing DB_USERNAME in .env")
-    if not db_password:
-        raise ValueError("Missing DB_PASSWORD in .env")
 
     validate_phone(recipient_number, "JALSHOOCHAK_WHATSAPP_NUMBER")
+    validate_phone(user_number, "USER_NUMBER")
 
     return WhatsAppConfig(
         recipient_number=recipient_number,
-        message=message,
+        user_number=user_number,
+        start_message=start_message,
         browser=browser,
         edge_profile_dir=edge_profile_dir,
         edge_profile_name=edge_profile_name,
         keep_browser_open=keep_browser_open,
         send_timeout=send_timeout,
         response_timeout=response_timeout,
-        db_url=db_url,
-        db_username=db_username,
-        db_password=db_password,
-        common_schema=common_schema,
-        tent_config=tent_config,
-        tent_id=tent_id,
     )
