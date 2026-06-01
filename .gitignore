@@ -6,3 +6,4 @@ __pycache__/
 .whatsapp_chrome_profile/
 *.pyc
 .env
+reports/
