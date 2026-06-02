@@ -67,14 +67,18 @@ def run_whatsapp_automation(flows: Optional[List[str]] = None):
                 f"Available keys: {list(FLOW_REGISTRY.keys())}"
             )
 
-        # Pre-validate flows against DB state (e.g. channel count checks).
-        # Flows that cannot run are removed and pre-built as PASS results so
-        # they still appear in the CSV report with an informative message.
+        # Pre-validate flows against DB state (e.g. channel/language count
+        # checks).  Flows that cannot run are removed and pre-built as PASS
+        # results so they still appear in the CSV report.
+        # menu_context carries visibility flags for conditional main-menu
+        # options (e.g. "Select Channel") so bootstrap_flow can skip checking
+        # options that are legitimately absent for this tenant.
         skipped_results: list[dict] = []
+        menu_context: dict = {}
         try:
             conn = get_connection()
             try:
-                flows, skipped_results = validate_flows(conn, flows)
+                flows, skipped_results, menu_context = validate_flows(conn, flows)
             finally:
                 conn.close()
         except Exception as exc:
@@ -101,7 +105,7 @@ def run_whatsapp_automation(flows: Optional[List[str]] = None):
         for key in flows:
             print(f"\n--- Running flow: {key} ---")
             try:
-                ok, err_msg = FLOW_REGISTRY[key].run(driver, config)
+                ok, err_msg = FLOW_REGISTRY[key].run(driver, config, menu_context)
             except Exception as exc:
                 ok, err_msg = False, str(exc)
 

@@ -12,7 +12,6 @@ load_dotenv()
 
 _TENANT_ID = os.getenv("TENT_ID", "").strip()
 
-_cached_language: str | None = None
 _cached_config_value: dict | None = None
 
 # Localised labels used to identify the "Select Channel" option in main menus.
@@ -21,18 +20,22 @@ SELECT_CHANNEL_LABEL: dict[str, str] = {
     "hi": "चैनल चुनें",
 }
 
+# Localised labels used to identify the "Select Language" option in main menus.
+SELECT_LANGUAGE_LABEL: dict[str, str] = {
+    "en": "Select Language",
+    "hi": "भाषा चुनें",
+}
+
 
 def get_user_language(connection, contact_id: str) -> str:
     """Return the language name for *contact_id* from user_language_preference.
 
     The leading '+' is stripped from *contact_id* if present so callers can
     pass ``config.recipient_number`` directly.
-    Caches the result for subsequent calls within the same process.
+    Result is NOT cached — always queries the DB so flows that change the
+    language preference (e.g. select_language_1) are reflected in subsequent
+    bootstrap calls within the same process.
     """
-    global _cached_language
-    if _cached_language is not None:
-        return _cached_language
-
     stripped_id = contact_id.lstrip("+")
     query = """
         SELECT ulp.language_value
@@ -44,8 +47,7 @@ def get_user_language(connection, contact_id: str) -> str:
         raise RuntimeError(
             f"No language preference found for contact_id '{stripped_id}'"
         )
-    _cached_language = rows[0]["language_value"]
-    return _cached_language
+    return rows[0]["language_value"]
 
 
 def get_tenant_config(connection) -> dict:

@@ -21,6 +21,7 @@ from whatsapp_automation.flows.bootstrap import bootstrap_flow
 from whatsapp_automation.messaging import send_message, wait_for_nth_reply
 from whatsapp_automation.services.common_service import (
     SELECT_CHANNEL_LABEL,
+    SELECT_LANGUAGE_LABEL,
     get_tenant_config,
 )
 from whatsapp_automation.services.select_channel_service import (
@@ -56,7 +57,7 @@ def _find_option_number(options: dict, lang_symbol: str) -> str | None:
     return None
 
 
-def run(driver, config) -> tuple[bool, str]:
+def run(driver, config, menu_context: dict | None = None) -> tuple[bool, str]:
     """Test scenario 3 for the select_channel flow — cancel with "No".
 
     Returns:
@@ -65,7 +66,7 @@ def run(driver, config) -> tuple[bool, str]:
     # ------------------------------------------------------------------
     # Step 1: Bootstrap — send start message + validate main menu
     # ------------------------------------------------------------------
-    ok, err, main_menu = bootstrap_flow(driver, config)
+    ok, err, main_menu = bootstrap_flow(driver, config, menu_context)
     if not ok:
         return False, f"[select_channel_3] Bootstrap failed: {err}"
 
@@ -164,9 +165,23 @@ def run(driver, config) -> tuple[bool, str]:
         print(f"[select_channel_3] Main menu after 'No' (waited): {cancel_reply}")
 
     # ------------------------------------------------------------------
-    # Step 9: Validate main menu and verify DB channel preference unchanged
+    # Step 9: Validate main menu and verify DB channel preference unchanged.
+    # Re-build hidden_labels from menu_context so conditional options that
+    # are absent for this tenant (e.g. "Select Language" on single-language
+    # tenants) are correctly skipped — same logic as bootstrap_flow.
     # ------------------------------------------------------------------
-    passed, message = validate_main_menu(cancel_reply, main_menu)
+    ctx = menu_context or {}
+    hidden_labels: set[str] = set()
+    if not ctx.get("select_channel_visible", True):
+        hidden_labels.add(
+            SELECT_CHANNEL_LABEL.get(lang_symbol, SELECT_CHANNEL_LABEL["en"])
+        )
+    if not ctx.get("select_language_visible", True):
+        hidden_labels.add(
+            SELECT_LANGUAGE_LABEL.get(lang_symbol, SELECT_LANGUAGE_LABEL["en"])
+        )
+
+    passed, message = validate_main_menu(cancel_reply, main_menu, hidden_labels)
     if not passed:
         return False, f"[select_channel_3] Main menu validation after cancel failed: {message}"
     print("[select_channel_3] Main menu validation after cancel: PASSED")
