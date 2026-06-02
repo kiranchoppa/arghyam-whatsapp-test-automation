@@ -21,6 +21,12 @@ SELECT_CHANNEL_LABEL: dict[str, str] = {
     "hi": "चैनल चुनें",
 }
 
+# Localised labels used to identify the "Select Language" option in main menus.
+SELECT_LANGUAGE_LABEL: dict[str, str] = {
+    "en": "Select Language",
+    "hi": "भाषा चुनें",
+}
+
 
 def get_user_language(connection, contact_id: str) -> str:
     """Return the language name for *contact_id* from user_language_preference.

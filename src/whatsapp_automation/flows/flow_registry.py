@@ -9,7 +9,7 @@ To add a new flow test:
      ``FLOW_CATEGORIES``, and ``FLOW_REGISTRY`` will be derived automatically.
 
 Usage in send_whatsapp.py:
-    run_whatsapp_automation(flows=["select_channel_1", "select_channel_2"])
+    run_whatsapp_automation(flows=["select_channel_1", "select_language_1"])
 """
 
 from whatsapp_automation.flows.select_channel import (
@@ -17,6 +17,10 @@ from whatsapp_automation.flows.select_channel import (
     select_channel_2,
     select_channel_3,
     select_channel_hidden,
+)
+from whatsapp_automation.flows.select_language import (
+    select_language_1,
+    select_language_hidden,
 )
 
 FLOW_CATEGORIES: dict[str, dict[str, object]] = {
@@ -26,10 +30,10 @@ FLOW_CATEGORIES: dict[str, dict[str, object]] = {
         "select_channel_3": select_channel_3,
         "select_channel_hidden": select_channel_hidden,
     },
-    # Future categories, e.g.:
-    # "select_language": {
-    #     "select_language_1": select_language_1,
-    # },
+    "select_language": {
+        "select_language_1": select_language_1,
+        "select_language_hidden": select_language_hidden,
+    },
 }
 
 FLOW_REGISTRY: dict[str, object] = {

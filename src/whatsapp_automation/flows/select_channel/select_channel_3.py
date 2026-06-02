@@ -56,7 +56,7 @@ def _find_option_number(options: dict, lang_symbol: str) -> str | None:
     return None
 
 
-def run(driver, config) -> tuple[bool, str]:
+def run(driver, config, menu_context: dict | None = None) -> tuple[bool, str]:
     """Test scenario 3 for the select_channel flow — cancel with "No".
 
     Returns:
@@ -65,7 +65,7 @@ def run(driver, config) -> tuple[bool, str]:
     # ------------------------------------------------------------------
     # Step 1: Bootstrap — send start message + validate main menu
     # ------------------------------------------------------------------
-    ok, err, main_menu = bootstrap_flow(driver, config)
+    ok, err, main_menu = bootstrap_flow(driver, config, menu_context)
     if not ok:
         return False, f"[select_channel_3] Bootstrap failed: {err}"
 
