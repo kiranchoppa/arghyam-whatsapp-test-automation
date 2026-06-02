@@ -8,9 +8,11 @@ from selenium.common.exceptions import WebDriverException
 
 from whatsapp_automation.config import load_config
 from whatsapp_automation.create_report import write_report
+from whatsapp_automation.db import get_connection
 from whatsapp_automation.driver_factory import create_driver
 from whatsapp_automation.flows.flow_registry import FLOW_REGISTRY
 from whatsapp_automation.messaging import close_whatsapp, open_whatsapp, send_message
+from whatsapp_automation.validations.flow_validations import validate_flows
 
 
 def _run_default(driver, config):
@@ -65,11 +67,34 @@ def run_whatsapp_automation(flows: Optional[List[str]] = None):
                 f"Available keys: {list(FLOW_REGISTRY.keys())}"
             )
 
+        # Pre-validate flows against DB state (e.g. channel count checks).
+        # Flows that cannot run are removed and pre-built as PASS results so
+        # they still appear in the CSV report with an informative message.
+        skipped_results: list[dict] = []
+        try:
+            conn = get_connection()
+            try:
+                flows, skipped_results = validate_flows(conn, flows)
+            finally:
+                conn.close()
+        except Exception as exc:
+            print(
+                f"Warning: flow pre-validation failed, running all requested flows: {exc}",
+                file=sys.stderr,
+            )
+
         run_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+        # If all flows were skipped, write the report and exit cleanly.
+        if not flows:
+            skipped_count = len(skipped_results)
+            print(f"\n=== Results: {skipped_count} skipped (not applicable), 0 run ===")
+            write_report(skipped_results, run_timestamp)
+            return 0
 
         open_whatsapp(driver, config.recipient_number, config.send_timeout)
 
-        results = []
+        results: list[dict] = []
         passed_count = 0
         failed_count = 0
 
@@ -89,8 +114,13 @@ def run_whatsapp_automation(flows: Optional[List[str]] = None):
                 results.append({"flow_name": key, "status": "FAIL", "error_message": err_msg})
                 print(f"--- Flow {key}: FAIL — {err_msg} ---")
 
-        print(f"\n=== Results: {passed_count} passed, {failed_count} failed ===")
-        write_report(results, run_timestamp)
+        all_results = skipped_results + results
+        skipped_count = len(skipped_results)
+        print(
+            f"\n=== Results: {passed_count} passed, {failed_count} failed, "
+            f"{skipped_count} skipped (not applicable) ==="
+        )
+        write_report(all_results, run_timestamp)
 
         return 0 if failed_count == 0 else 1
 

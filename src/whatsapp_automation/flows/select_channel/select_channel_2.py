@@ -7,8 +7,8 @@ Steps
 3.  Identify the option number associated with "Select Channel".
 4.  Send that number and receive the channel selection prompt.
 5.  Validate the channel selection prompt and available channels.
-6.  Identify the number associated with "IOT" from the channel list.
-7.  Send IOT number and receive the "Are you sure?" confirmation prompt.
+6.  Select the 2nd channel available from the channel list.
+7.  Send that channel number and receive the "Are you sure?" confirmation prompt.
 8.  Send "Yes" to confirm and receive the final success reply.
 9.  Validate the channel selection success message and verify DB channel preference.
 """
@@ -18,22 +18,15 @@ import re
 from whatsapp_automation.db import get_connection
 from whatsapp_automation.flows.bootstrap import bootstrap_flow
 from whatsapp_automation.messaging import send_message, wait_for_nth_reply
-from whatsapp_automation.services.common_service import get_tenant_config
+from whatsapp_automation.services.common_service import (
+    SELECT_CHANNEL_LABEL,
+    get_tenant_config,
+)
 from whatsapp_automation.services.select_channel_service import get_channel_config
 from whatsapp_automation.validations.select_channel_validations import (
     validate_channel_selection_prompt,
     validate_channel_selection_success,
 )
-
-_TARGET_CHANNEL = "IOT"
-
-# Localised labels used to identify the "Select Channel" option in the main menu.
-# Keys are ISO language symbols as returned by language_map.get_language_symbol().
-_SELECT_CHANNEL_LABEL: dict[str, str] = {
-    "en": "Select Channel",
-    "hi": "चैनल चुनें",
-}
-
 
 def _find_option_number(options: dict, lang_symbol: str) -> str | None:
     """Return the option number whose label matches the "Select Channel" label for *lang_symbol*.
@@ -49,7 +42,7 @@ def _find_option_number(options: dict, lang_symbol: str) -> str | None:
     Returns:
         The matching option number string (e.g. ``"2"``), or ``None`` if not found.
     """
-    keyword = _SELECT_CHANNEL_LABEL.get(lang_symbol, _SELECT_CHANNEL_LABEL["en"])
+    keyword = SELECT_CHANNEL_LABEL.get(lang_symbol, SELECT_CHANNEL_LABEL["en"])
     for key, option in options.items():
         label = option.get("label", {}).get(lang_symbol, "")
         if keyword.lower() in label.lower():
@@ -92,6 +85,10 @@ def run(driver, config) -> tuple[bool, str]:
     channels = channel_config.get("channels", [])
     channel_selection = tenant_config["screens"]["CHANNEL_SELECTION"]
 
+    if len(channels) < 2:
+        return False, "[select_channel_2] Fewer than 2 channels found in channel config."
+    target_channel = channels[1]
+
     # ------------------------------------------------------------------
     # Step 3: Identify "Select Channel" option number (language-aware)
     # ------------------------------------------------------------------
@@ -122,23 +119,21 @@ def run(driver, config) -> tuple[bool, str]:
     print("[select_channel_2] Channel selection prompt validation: PASSED")
 
     # ------------------------------------------------------------------
-    # Step 6: Identify IOT number from channel list (1-based index)
+    # Step 6: Select the 2nd channel available (1-based index = "2")
     # ------------------------------------------------------------------
-    if _TARGET_CHANNEL not in channels:
-        return False, f"[select_channel_2] '{_TARGET_CHANNEL}' not found in channel list: {channels}"
-    iot_number = str(channels.index(_TARGET_CHANNEL) + 1)
-    print(f"[select_channel_2] '{_TARGET_CHANNEL}' option number: {iot_number}")
+    channel_number = "2"
+    print(f"[select_channel_2] '{target_channel}' option number: {channel_number}")
 
     # ------------------------------------------------------------------
-    # Step 7: Send IOT number — bot replies with "Are you sure?" prompt.
+    # Step 7: Send channel number — bot replies with "Are you sure?" prompt.
     # The reply is a WhatsApp interactive-button message rendered as:
     #   "Are you sure?\n<timestamp>\nYes\nNo"
     # ------------------------------------------------------------------
     try:
-        are_you_sure_reply = send_message(driver, iot_number, config.response_timeout)
+        are_you_sure_reply = send_message(driver, channel_number, config.response_timeout)
         print(f"[select_channel_2] 'Are you sure?' prompt: {are_you_sure_reply}")
     except Exception as exc:
-        return False, f"[select_channel_2] Error sending IOT option: {exc}"
+        return False, f"[select_channel_2] Error sending channel option: {exc}"
 
     # ------------------------------------------------------------------
     # Step 8: Send "Yes" to confirm and receive the final success reply.
@@ -152,7 +147,7 @@ def run(driver, config) -> tuple[bool, str]:
     # ------------------------------------------------------------------
     # Step 8b: Wait for the bot to return to the main menu (second reply
     # after "Yes").  The bot sends two messages in sequence:
-    #   [1] "Your preferred channel has been set to IOT."
+    #   [1] "Your preferred channel has been set to <channel>."
     #   [2] The main menu again
     # We wait for [2] so the next flow starts with a clean conversation
     # state and does not pick up a stale reply.
@@ -172,7 +167,7 @@ def run(driver, config) -> tuple[bool, str]:
                 lang_symbol,
                 connection,
                 config.user_number,
-                _TARGET_CHANNEL,
+                target_channel,
             )
         finally:
             connection.close()

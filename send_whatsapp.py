@@ -21,7 +21,8 @@ from whatsapp_automation.runner import run_whatsapp_automation  # noqa: E402
 #   flows = []                                 # run default send-and-read flow
 FLOWS = [
     "select_channel_1",
-    "select_channel_2"
+    "select_channel_2",
+    "select_channel_3"
 ]
 
 

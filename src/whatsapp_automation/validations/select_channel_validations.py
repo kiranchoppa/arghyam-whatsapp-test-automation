@@ -48,6 +48,38 @@ def validate_channel_selection_prompt(
     return True, ""
 
 
+def validate_channel_preference(
+    connection,
+    contact_id: str,
+    expected_channel: str,
+) -> tuple[bool, str]:
+    """Verify ``user_channel_preference.channel_value`` equals *expected_channel*.
+
+    Args:
+        connection:        Open psycopg2 connection; caller manages lifecycle.
+        contact_id:        User phone number passed to ``get_user_channel``.
+        expected_channel:  The channel value expected in the DB (e.g. after a
+                           successful selection or unchanged after cancel).
+
+    Returns:
+        ``(True, "")`` if the DB value matches, otherwise
+        ``(False, "<reason>")``.
+    """
+    try:
+        actual_channel = get_user_channel(connection, contact_id)
+    except Exception as exc:
+        return False, f"DB check failed while reading user channel preference: {exc}"
+
+    if actual_channel != expected_channel:
+        return False, (
+            f"DB channel preference does not match expected value.\n"
+            f"  Expected : {expected_channel!r}\n"
+            f"  Actual   : {actual_channel!r}"
+        )
+
+    return True, ""
+
+
 def validate_channel_selection_success(
     response: str,
     channel_selection: dict,
@@ -92,16 +124,4 @@ def validate_channel_selection_success(
             f"  Response : {response!r}"
         )
 
-    try:
-        actual_channel = get_user_channel(connection, contact_id)
-    except Exception as exc:
-        return False, f"DB check failed while reading user channel preference: {exc}"
-
-    if actual_channel != expected_channel:
-        return False, (
-            f"DB channel preference not updated correctly.\n"
-            f"  Expected : {expected_channel!r}\n"
-            f"  Actual   : {actual_channel!r}"
-        )
-
-    return True, ""
+    return validate_channel_preference(connection, contact_id, expected_channel)

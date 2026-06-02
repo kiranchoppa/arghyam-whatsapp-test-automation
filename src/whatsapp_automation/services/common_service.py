@@ -15,6 +15,12 @@ _TENANT_ID = os.getenv("TENT_ID", "").strip()
 _cached_language: str | None = None
 _cached_config_value: dict | None = None
 
+# Localised labels used to identify the "Select Channel" option in main menus.
+SELECT_CHANNEL_LABEL: dict[str, str] = {
+    "en": "Select Channel",
+    "hi": "चैनल चुनें",
+}
+
 
 def get_user_language(connection, contact_id: str) -> str:
     """Return the language name for *contact_id* from user_language_preference.
