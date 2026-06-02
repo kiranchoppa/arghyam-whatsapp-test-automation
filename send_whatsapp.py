@@ -23,7 +23,8 @@ FLOWS = [
     "select_channel_1",
     "select_channel_2",
     "select_channel_3",
-    "select_language_1"
+    "select_language_1",
+    "select_language_2"
 ]
 
 
