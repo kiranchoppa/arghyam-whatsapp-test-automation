@@ -15,8 +15,12 @@ def write_report(results: list[dict], timestamp: str) -> None:
     Args:
         results:   List of result dicts, each with keys:
                    - ``flow_name`` (str): registered key of the flow.
-                   - ``status``    (str): ``"PASS"`` or ``"FAIL"``.
-                   - ``error_message`` (str): failure reason, or ``"-"`` on pass.
+                   - ``status``    (str): ``"SUCCESS"``, ``"PASS"``, or ``"FAIL"``.
+                     ``"SUCCESS"`` — flow ran and passed.
+                     ``"PASS"``    — flow was skipped (not applicable); informative
+                                    message is preserved in ``error_message``.
+                     ``"FAIL"``    — flow ran and failed.
+                   - ``error_message`` (str): failure/skip reason, or ``"-"`` on success.
         timestamp: Run-start timestamp string formatted as
                    ``YYYY-MM-DD_HH-MM-SS`` (supplied by the runner).
 
@@ -32,7 +36,7 @@ def write_report(results: list[dict], timestamp: str) -> None:
             writer.writerow({
                 "flow_name": row["flow_name"],
                 "status": row["status"],
-                "error_message": row["error_message"] if row["status"] == "FAIL" else "-",
+                "error_message": row["error_message"] if row["status"] != "SUCCESS" else "-",
             })
 
     print(f"\nReport written to: {filepath}")

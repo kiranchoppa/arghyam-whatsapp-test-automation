@@ -16,6 +16,7 @@ from whatsapp_automation.flows.select_channel import (
     select_channel_1,
     select_channel_2,
     select_channel_3,
+    select_channel_hidden,
 )
 
 FLOW_CATEGORIES: dict[str, dict[str, object]] = {
@@ -23,6 +24,7 @@ FLOW_CATEGORIES: dict[str, dict[str, object]] = {
         "select_channel_1": select_channel_1,
         "select_channel_2": select_channel_2,
         "select_channel_3": select_channel_3,
+        "select_channel_hidden": select_channel_hidden,
     },
     # Future categories, e.g.:
     # "select_language": {

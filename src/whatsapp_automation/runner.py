@@ -107,8 +107,8 @@ def run_whatsapp_automation(flows: Optional[List[str]] = None):
 
             if ok:
                 passed_count += 1
-                results.append({"flow_name": key, "status": "PASS", "error_message": "-"})
-                print(f"--- Flow {key}: PASS ---")
+                results.append({"flow_name": key, "status": "SUCCESS", "error_message": "-"})
+                print(f"--- Flow {key}: SUCCESS ---")
             else:
                 failed_count += 1
                 results.append({"flow_name": key, "status": "FAIL", "error_message": err_msg})
@@ -117,7 +117,7 @@ def run_whatsapp_automation(flows: Optional[List[str]] = None):
         all_results = skipped_results + results
         skipped_count = len(skipped_results)
         print(
-            f"\n=== Results: {passed_count} passed, {failed_count} failed, "
+            f"\n=== Results: {passed_count} succeeded, {failed_count} failed, "
             f"{skipped_count} skipped (not applicable) ==="
         )
         write_report(all_results, run_timestamp)

@@ -9,6 +9,8 @@ from whatsapp_automation.flows.flow_registry import FLOW_CATEGORIES
 from whatsapp_automation.services.select_channel_service import get_channel_config
 
 _SKIP_MESSAGE = "Number of channels present is 1; this flow is not applicable."
+_HIDDEN_FLOW_KEY = "select_channel_hidden"
+_HIDDEN_SKIP_MESSAGE = "Channels > 1; select_channel_hidden is not applicable."
 
 
 def validate_flows(
@@ -16,12 +18,17 @@ def validate_flows(
 ) -> tuple[list[str], list[dict]]:
     """Validate whether each flow in *flows* can run given the current DB state.
 
-    Currently enforces one rule:
+    Enforces two complementary rules for the ``select_channel`` category:
 
-    **select_channel rule** — all flows in the ``select_channel`` category
-    require more than one channel to be configured for the tenant.  When only
-    one channel is present the flows are removed from the execution list and a
-    PASS result is pre-built for each of them so they appear in the report.
+    **Multi-channel rule** — ``select_channel_1/2/3`` require more than one
+    channel.  When only one channel is present they are removed from the
+    execution list, pre-built as PASS results, and ``select_channel_hidden``
+    is automatically injected so the absence of the "Select Channel" option
+    in the main menu is verified.
+
+    **Single-channel rule** — ``select_channel_hidden`` is only meaningful
+    when exactly one channel is configured.  If it appears in the requested
+    flows but channels > 1, it is skipped with an informative PASS result.
 
     Args:
         connection: Open psycopg2 connection; caller manages lifecycle.
@@ -45,11 +52,25 @@ def validate_flows(
     channels = channel_config.get("channels", [])
 
     if len(channels) > 1:
+        # select_channel_hidden must not run when multiple channels exist.
+        if _HIDDEN_FLOW_KEY in flows:
+            skipped_results = [
+                {
+                    "flow_name": _HIDDEN_FLOW_KEY,
+                    "status": "PASS",
+                    "error_message": _HIDDEN_SKIP_MESSAGE,
+                }
+            ]
+            remaining_flows = [f for f in flows if f != _HIDDEN_FLOW_KEY]
+            return remaining_flows, skipped_results
         return flows, []
 
+    # Only one (or zero) channel configured — skip multi-channel flows and
+    # inject select_channel_hidden to verify the option is absent from the menu.
     print(
         f"[flow_validations] Only {len(channels)} channel(s) configured "
-        f"({channels}). Skipping select_channel flows: {requested_select_channel}"
+        f"({channels}). Skipping select_channel flows: "
+        f"{[f for f in requested_select_channel if f != _HIDDEN_FLOW_KEY]}"
     )
 
     skipped_results = [
@@ -59,8 +80,11 @@ def validate_flows(
             "error_message": _SKIP_MESSAGE,
         }
         for key in flows
-        if key in select_channel_keys
+        if key in select_channel_keys and key != _HIDDEN_FLOW_KEY
     ]
 
-    remaining_flows = [f for f in flows if f not in select_channel_keys]
+    remaining_flows = [f for f in flows if f not in select_channel_keys or f == _HIDDEN_FLOW_KEY]
+    if _HIDDEN_FLOW_KEY not in remaining_flows:
+        remaining_flows = [_HIDDEN_FLOW_KEY] + remaining_flows
+
     return remaining_flows, skipped_results
