@@ -38,6 +38,16 @@ Set these in `.env`:
 - `SEND_TIMEOUT_SECONDS`
 - `RESPONSE_TIMEOUT_SECONDS`
 
+**Main database (jalsoochak):**
+- `DB_URL` — primary PostgreSQL URL
+- `DB_USERNAME`, `DB_PASSWORD`
+
+**Analytics database (used by `no_water_supply_1`):**
+- `ANALYTICS_DB_URL` — e.g. `postgresql://192.168.6.150:5432/analytics`
+- `ANALYTICS_DB_USERNAME`, `ANALYTICS_DB_PASSWORD`
+- `ANOMALY_USER_ID` — `user_id` filter for `analytics_schema.anomaly_table` (default `21350`)
+- `ANOMALY_SCHEME_ID` — `scheme_id` filter (default `27653`)
+
 ## Setup
 
 ```bash

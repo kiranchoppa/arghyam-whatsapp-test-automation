@@ -19,14 +19,23 @@ from whatsapp_automation.runner import run_whatsapp_automation  # noqa: E402
 #   flows = ["select_channel_1"]               # run only scenario 1
 #   flows = ["select_channel_1", "select_channel_2"]  # run both in order
 #   flows = []                                 # run default send-and-read flow
-FLOWS = [
-    "select_channel_1",
-    "select_channel_2",
-    "select_channel_3",
-    "select_language_1",
-    "select_language_2"
-]
 
+# ALL FLOWS
+# FLOWS = [
+#     "select_channel_1",
+#     "select_channel_2",
+#     "select_channel_3",
+#     "select_language_1",
+#     "select_language_2",
+#     "no_water_supply_1",
+# ]
+
+# TESTING FLOWS
+FLOWS = [
+    "no_water_supply_1",
+    "no_water_supply_2",
+    "no_water_supply_3",
+]
 
 def main():
     return run_whatsapp_automation(flows=FLOWS)
