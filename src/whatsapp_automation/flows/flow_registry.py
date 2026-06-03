@@ -12,6 +12,11 @@ Usage in send_whatsapp.py:
     run_whatsapp_automation(flows=["select_channel_1", "select_language_1"])
 """
 
+from whatsapp_automation.flows.no_water_supply import (
+    no_water_supply_1,
+    no_water_supply_2,
+    no_water_supply_3,
+)
 from whatsapp_automation.flows.select_channel import (
     select_channel_1,
     select_channel_2,
@@ -35,6 +40,11 @@ FLOW_CATEGORIES: dict[str, dict[str, object]] = {
         "select_language_1": select_language_1,
         "select_language_2": select_language_2,
         "select_language_hidden": select_language_hidden,
+    },
+    "no_water_supply": {
+        "no_water_supply_1": no_water_supply_1,
+        "no_water_supply_2": no_water_supply_2,
+        "no_water_supply_3": no_water_supply_3,
     },
 }
 
